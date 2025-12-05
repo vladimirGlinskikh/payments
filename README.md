@@ -39,7 +39,6 @@ cd payments
 docker compose up -d postgres
 
 # 3. Устанавливаем и запускаем бэкенд
-cd backend
 npm install
 
 # 4. Создаём .env (если ещё нет)
@@ -51,7 +50,7 @@ npx prisma db push
 # 6. Запускаем сервер
 npm run start:dev
 Сервер будет доступен по адресу: http://localhost:4000
-Переменные окружения (backend/.env)
+Переменные окружения (payments/.env)
 env# Обязательно
 DATABASE_URL="postgresql://postgres:123456@localhost:5433/payment"
 
