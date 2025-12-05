@@ -1,4 +1,5 @@
 import { ConflictException, Injectable } from '@nestjs/common'
+import { hash } from 'argon2'
 
 import { PrismaService } from '../../infra/prisma/prisma.service'
 
@@ -17,11 +18,12 @@ export class AuthService {
 			}
 		})
 		if (exists) throw new ConflictException('User is already registered')
+		const hashedPassword = await hash(password)
 		const user = await this.prismaservice.user.create({
 			data: {
 				name,
 				email,
-				password
+				password: hashedPassword
 			}
 		})
 		return user
