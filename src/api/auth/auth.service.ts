@@ -7,8 +7,9 @@ import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import { User } from '@prisma/client'
 import { hash, verify } from 'argon2'
+import { Response } from 'express'
 
-import { ms, StringValue } from '../../common/utils'
+import { isDevUtil, ms, StringValue } from '../../common/utils'
 import { PrismaService } from '../../infra/prisma/prisma.service'
 
 import { LoginDto, RegisterDto } from './dto'
@@ -18,6 +19,7 @@ import { JwtPayload } from './interfaces'
 export class AuthService {
 	private readonly JWT_ACCESS_TOKEN_TTL: StringValue
 	private readonly JWT_REFRESH_TOKEN_TTL: StringValue
+	private readonly COOKIES_DOMAIN: string
 
 	public constructor(
 		private readonly prismaService: PrismaService,
@@ -30,9 +32,11 @@ export class AuthService {
 		this.JWT_REFRESH_TOKEN_TTL = this.configService.getOrThrow<StringValue>(
 			'JWT_REFRESH_TOKEN_TTL'
 		)
+		this.COOKIES_DOMAIN =
+			configService.getOrThrow<StringValue>('COOKIES_DOMAIN')
 	}
 
-	public async register(dto: RegisterDto) {
+	public async register(res: Response, dto: RegisterDto) {
 		const { name, email, password } = dto
 
 		const exists = await this.prismaService.user.findUnique({
@@ -49,10 +53,10 @@ export class AuthService {
 				password: hashedPassword
 			}
 		})
-		return this.generateTokens(user)
+		return this.auth(res, user)
 	}
 
-	public async login(dto: LoginDto) {
+	public async login(res: Response, dto: LoginDto) {
 		const { email, password } = dto
 		const user = await this.prismaService.user.findUnique({
 			where: {
@@ -65,7 +69,18 @@ export class AuthService {
 		if (!isValidPassword)
 			throw new NotFoundException('Invalid login or password')
 
-		return this.generateTokens(user)
+		return this.auth(res, user)
+	}
+
+	public logout(res: Response) {
+		return this.setCookie(res, '', new Date(0))
+	}
+
+	private async auth(res: Response, user: User) {
+		const { accessToken, refreshToken, refreshTokenExpires } =
+			await this.generateTokens(user)
+		this.setCookie(res, refreshToken, refreshTokenExpires)
+		return { accessToken }
 	}
 
 	private async generateTokens(user: User) {
@@ -85,6 +100,20 @@ export class AuthService {
 			secret: this.configService.getOrThrow<string>('REFRESH_SECRET')
 		} as any)
 
-		return { accessToken, refreshToken, refreshTokenExpires }
+		return {
+			accessToken,
+			refreshToken,
+			refreshTokenExpires
+		}
+	}
+
+	private setCookie(res: Response, value: string, expires: Date) {
+		res.cookie('refreshToken', value, {
+			httpOnly: true,
+			domain: this.COOKIES_DOMAIN,
+			expires,
+			secure: !isDevUtil(this.configService),
+			sameSite: 'lax'
+		})
 	}
 }
