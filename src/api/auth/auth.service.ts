@@ -1,13 +1,14 @@
 import {
 	ConflictException,
 	Injectable,
-	NotFoundException
+	NotFoundException,
+	UnauthorizedException
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import { User } from '@prisma/client'
 import { hash, verify } from 'argon2'
-import { Response } from 'express'
+import type { Request, Response } from 'express'
 
 import { isDevUtil, ms, StringValue } from '../../common/utils'
 import { PrismaService } from '../../infra/prisma/prisma.service'
@@ -70,6 +71,34 @@ export class AuthService {
 			throw new NotFoundException('Invalid login or password')
 
 		return this.auth(res, user)
+	}
+
+	public async refresh(req: Request, res: Response) {
+		if (!req || !req.cookies)
+			throw new UnauthorizedException(
+				'Failed to get authorization cookie'
+			)
+
+		const refreshToken = req.cookies['refreshToken']
+		if (refreshToken) {
+			const payload: JwtPayload = await this.jwtService.verifyAsync(
+				refreshToken,
+				{
+					secret: this.configService.getOrThrow<string>(
+						'REFRESH_SECRET'
+					)
+				}
+			)
+
+			if (payload) {
+				const user = await this.prismaService.user.findUnique({
+					where: {
+						id: payload.id
+					}
+				})
+				if (user) return this.auth(res, user)
+			}
+		}
 	}
 
 	public logout(res: Response) {
