@@ -1,13 +1,17 @@
-import { ConflictException, Injectable } from '@nestjs/common'
+import {
+	ConflictException,
+	Injectable,
+	NotFoundException
+} from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import { User } from '@prisma/client'
-import { hash } from 'argon2'
+import { hash, verify } from 'argon2'
 
 import { ms, StringValue } from '../../common/utils'
 import { PrismaService } from '../../infra/prisma/prisma.service'
 
-import { RegisterDto } from './dto'
+import { LoginDto, RegisterDto } from './dto'
 import { JwtPayload } from './interfaces'
 
 @Injectable()
@@ -45,6 +49,22 @@ export class AuthService {
 				password: hashedPassword
 			}
 		})
+		return this.generateTokens(user)
+	}
+
+	public async login(dto: LoginDto) {
+		const { email, password } = dto
+		const user = await this.prismaService.user.findUnique({
+			where: {
+				email
+			}
+		})
+		if (!user) throw new NotFoundException('Invalid login or password')
+
+		const isValidPassword = await verify(user.password, password)
+		if (!isValidPassword)
+			throw new NotFoundException('Invalid login or password')
+
 		return this.generateTokens(user)
 	}
 

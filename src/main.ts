@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common'
+import { Logger, ValidationPipe } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 
@@ -10,6 +10,8 @@ async function bootstrap() {
 
 	const config = app.get(ConfigService)
 	const logger = new Logger(AppModule.name)
+
+	app.useGlobalPipes(new ValidationPipe())
 
 	app.enableCors(getCorsConfig(config))
 
