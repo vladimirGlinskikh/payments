@@ -1,13 +1,14 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common'
-import { AuthGuard } from '@nestjs/passport'
+import { Controller, Get } from '@nestjs/common'
 import {
 	ApiBearerAuth,
 	ApiOperation,
 	ApiResponse,
 	ApiTags
 } from '@nestjs/swagger'
-import type { User } from '@prisma/client'
-import type { Request } from 'express'
+import * as client from '@prisma/client'
+
+import { Authorized } from '../../common/decorators'
+import { Protected } from '../../common/decorators/protected.decorator'
 
 import { UsersService } from './users.service'
 
@@ -16,7 +17,7 @@ import { UsersService } from './users.service'
 export class UsersController {
 	constructor(private readonly usersService: UsersService) {}
 
-	@UseGuards(AuthGuard('jwt'))
+	@Protected()
 	@Get('me')
 	@ApiBearerAuth('JWT-auth')
 	@ApiOperation({
@@ -28,7 +29,7 @@ export class UsersController {
 		description: 'Успешно'
 	})
 	@ApiResponse({ status: 401, description: 'Не авторизован' })
-	getMe(@Req() req: Request): User {
-		return req.user!
+	getMe(@Authorized() user: client.User) {
+		return user
 	}
 }
