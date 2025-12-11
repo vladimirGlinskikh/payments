@@ -13,7 +13,7 @@ import type { Request, Response } from 'express'
 import { isDevUtil, ms, StringValue } from '../../common/utils'
 import { PrismaService } from '../../infra/prisma/prisma.service'
 
-import { LoginDto, RegisterDto } from './dto'
+import { LoginRequest, RegisterDto } from './dto'
 import { JwtPayload } from './interfaces'
 
 @Injectable()
@@ -57,7 +57,7 @@ export class AuthService {
 		return this.auth(res, user)
 	}
 
-	public async login(res: Response, dto: LoginDto) {
+	public async login(res: Response, dto: LoginRequest) {
 		const { email, password } = dto
 		const user = await this.prismaService.user.findUnique({
 			where: {

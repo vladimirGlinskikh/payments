@@ -3,7 +3,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
 import type { Request, Response } from 'express'
 
 import { AuthService } from './auth.service'
-import { LoginDto, RegisterDto } from './dto'
+import { LoginRequest, RegisterDto } from './dto'
 
 @ApiTags('auth')
 @Controller('auth')
@@ -25,7 +25,7 @@ export class AuthController {
 	@ApiResponse({ status: 200, description: 'Успешный логин' })
 	public async login(
 		@Res({ passthrough: true }) res: Response,
-		@Body() dto: LoginDto
+		@Body() dto: LoginRequest
 	) {
 		return this.authService.login(res, dto)
 	}
