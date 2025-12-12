@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 
 import { ApiModule } from './api/api.module'
+import { PlanModule } from './api/plan/plan.module'
 import { InfraModule } from './infra/infra.module'
 
 @Module({
@@ -11,7 +12,8 @@ import { InfraModule } from './infra/infra.module'
 			envFilePath: '.env'
 		}),
 		ApiModule,
-		InfraModule
+		InfraModule,
+		PlanModule
 	]
 })
 export class AppModule {}
