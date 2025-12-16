@@ -2,7 +2,7 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common'
 import type { User } from '@prisma/client'
 
 export const Authorized = createParamDecorator(
-	<K extends keyof User = never>(
+	<K extends keyof User>(
 		data: K | undefined,
 		ctx: ExecutionContext
 	): K extends undefined ? User : User[K] => {

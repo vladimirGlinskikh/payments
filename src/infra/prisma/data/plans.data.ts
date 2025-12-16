@@ -12,8 +12,8 @@ export const plans: Omit<Plan, 'id' | 'createdAt' | 'updatedAt'>[] = [
 			'Доступ к основным функциям'
 		],
 		isFeatured: false,
-		monthlyPrices: 560,
-		yearlyPrices: 7902
+		monthlyPrice: 560,
+		yearlyPrice: 7902
 	},
 	{
 		title: 'Профессиональный',
@@ -26,8 +26,8 @@ export const plans: Omit<Plan, 'id' | 'createdAt' | 'updatedAt'>[] = [
 			'Функции для команд'
 		],
 		isFeatured: true,
-		monthlyPrices: 2500,
-		yearlyPrices: 25000
+		monthlyPrice: 2500,
+		yearlyPrice: 25000
 	},
 	{
 		title: 'Бизнес',
@@ -40,7 +40,7 @@ export const plans: Omit<Plan, 'id' | 'createdAt' | 'updatedAt'>[] = [
 			'Выделенный менеджер'
 		],
 		isFeatured: false,
-		monthlyPrices: 4999,
-		yearlyPrices: 49000
+		monthlyPrice: 4999,
+		yearlyPrice: 49000
 	}
 ]

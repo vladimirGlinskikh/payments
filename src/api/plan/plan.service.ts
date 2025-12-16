@@ -9,15 +9,15 @@ export class PlanService {
 	public async getAll() {
 		const plans = await this.prismaService.plan.findMany({
 			orderBy: {
-				monthlyPrices: 'asc'
+				monthlyPrice: 'asc'
 			},
 			select: {
 				id: true,
 				title: true,
 				description: true,
 				features: true,
-				monthlyPrices: true,
-				yearlyPrices: true,
+				monthlyPrice: true,
+				yearlyPrice: true,
 				isFeatured: true
 			}
 		})
@@ -34,8 +34,8 @@ export class PlanService {
 				title: true,
 				description: true,
 				features: true,
-				monthlyPrices: true,
-				yearlyPrices: true,
+				monthlyPrice: true,
+				yearlyPrice: true,
 				isFeatured: true
 			}
 		})

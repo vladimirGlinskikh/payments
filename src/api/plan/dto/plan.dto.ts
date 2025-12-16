@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger'
 
 export class PlanResponse {
 	@ApiProperty({
-		description: 'Уникальный идентификато плана',
+		description: 'Уникальный идентификатор плана',
 		example: '23kslkKhge34slkj'
 	})
 	public id: string
