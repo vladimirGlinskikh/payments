@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common'
-import { User } from '@prisma/client'
+import { Injectable, NotFoundException } from '@nestjs/common'
+import { BillingPeriod, User } from '@prisma/client'
 
 import { PrismaService } from '../../infra/prisma/prisma.service'
+
+import { InitPaymentRequest } from './dto/init-payment.dto'
 
 interface PaymentHistoryItem {
 	id: string
@@ -37,5 +39,59 @@ export class PaymentService {
 		}))
 
 		return formatted
+	}
+
+	public async init(dto: InitPaymentRequest, user: User) {
+		const { planId, billingPeriod, provider } = dto
+
+		const plan = await this.prismaService.plan.findUnique({
+			where: { id: planId }
+		})
+
+		if (!plan) throw new NotFoundException('Plan not found')
+
+		const amount =
+			billingPeriod === 'YEARLY' ? plan.yearlyPrice : plan.monthlyPrice
+
+		let subscription = await this.prismaService.userSubscription.findUnique(
+			{
+				where: { userId: user.id }
+			}
+		)
+
+		if (subscription) {
+			subscription = await this.prismaService.userSubscription.update({
+				where: { id: subscription.id },
+				data: {
+					plan: { connect: { id: planId } },
+					status: 'PENDING_PAYMENT',
+					startDate: new Date(),
+					endDate: null
+				}
+			})
+		} else {
+			subscription = await this.prismaService.userSubscription.create({
+				data: {
+					user: { connect: { id: user.id } },
+					plan: { connect: { id: planId } },
+					status: 'PENDING_PAYMENT',
+					startDate: new Date()
+				}
+			})
+		}
+
+		const transaction = await this.prismaService.transaction.create({
+			data: {
+				amount,
+				provider,
+				billingPeriod: billingPeriod.toUpperCase() as BillingPeriod,
+				status: 'PENDING',
+				providerMeta: {},
+				user: { connect: { id: user.id } },
+				subscription: { connect: { id: subscription.id } }
+			}
+		})
+
+		return transaction
 	}
 }
