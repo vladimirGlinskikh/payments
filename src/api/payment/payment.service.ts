@@ -1,22 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
-import { BillingPeriod, User } from '@prisma/client'
+import { BillingPeriod, PaymentProvider, User } from '@prisma/client'
 
 import { PrismaService } from '../../infra/prisma/prisma.service'
 
 import { InitPaymentRequest } from './dto/init-payment.dto'
-
-interface PaymentHistoryItem {
-	id: string
-	createdAt: Date
-	plan: string
-	amount: number
-	provider: string
-	status: string
-}
+import { YoomoneyService } from './providers/yoomoney/yoomoney.service'
 
 @Injectable()
 export class PaymentService {
-	constructor(private readonly prismaService: PrismaService) {}
+	constructor(
+		private readonly prismaService: PrismaService,
+		private readonly yoomoneyService: YoomoneyService
+	) {}
 
 	public async getHistory(user: User) {
 		const payments = await this.prismaService.transaction.findMany({
@@ -88,10 +83,48 @@ export class PaymentService {
 				status: 'PENDING',
 				providerMeta: {},
 				user: { connect: { id: user.id } },
-				subscription: { connect: { id: subscription.id } }
+				subscription: {
+					connectOrCreate: {
+						where: {
+							userId: user.id
+						},
+						create: {
+							user: {
+								connect: {
+									id: user.id
+								}
+							},
+							plan: {
+								connect: {
+									id: plan.id
+								}
+							}
+						}
+					}
+				}
 			}
 		})
 
-		return transaction
+		let payment
+
+		switch (provider) {
+			case PaymentProvider.YOOKASSA:
+				payment = await this.yoomoneyService.create(
+					plan,
+					transaction,
+					billingPeriod
+				)
+		}
+
+		await this.prismaService.transaction.update({
+			where: {
+				id: transaction.id
+			},
+			data: {
+				providerMeta: payment
+			}
+		})
+
+		return payment
 	}
 }
